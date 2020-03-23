@@ -1,13 +1,16 @@
 import { Injectable } from "@angular/core";
 import { Socket } from "ngx-socket-io";
+import { Usuario } from '../classes/usuario';
 
 @Injectable({
 	providedIn: "root"
 })
 export class WebsocketService {
 	public socketStatus: boolean = false;
+	public usuario: Usuario = null;
 
 	constructor(private socket: Socket) {
+		this.cargarStorage();
 		this.checStatus();
 	}
 
@@ -33,8 +36,7 @@ export class WebsocketService {
 	 */
 	emit(evento: string, payload?: any, callback?: Function) {
 		//Emitir evento emit('EVENTO', payload, callback?)
-		console.log(`Emitiendo evento: "${evento}"`);
-		
+		//console.log(`Emitiendo evento: "${evento}"`);
 		this.socket.emit(evento, payload, callback);
 	}
 
@@ -43,8 +45,50 @@ export class WebsocketService {
 	 * 
 	 */
 	listen(evento: string) {
-		console.log(`Recibiendo evento: "${evento}"`);
+		//console.log(`Recibiendo evento: "${evento}"`);
 		return this.socket.fromEvent( evento );
 	}
+
+
+	/**
+	 * Metodo para que el servidor conozca que usuario esta conectado
+	 */
+	loginWS( nombre: string){
+		//console.log('Configurando ', nombre);
+
+		return new Promise( (resolve, reject) => {
+
+			this.emit('configurar-usuario', { nombre }, (resp)=> {
+				
+				//console.log(resp); //respuesta desde el servidor socket
+
+				this.usuario = new Usuario(nombre);
+				this.guardarStorage();
+				resolve();
+							
+			});
+
+		});
+
+	}
+
+	getUsuario(){
+		return this.usuario;
+	}
+
+
+	//Guardar el usuario en el storage paque que no se pierda al refrescar el navegador
+	guardarStorage(){
+		localStorage.setItem('usuario', JSON.stringify(this.usuario));
+	}
+
+	cargarStorage(){
+		if (localStorage.getItem('usuario')) {
+			this.usuario = JSON.parse(localStorage.getItem('usuario'));
+			//enviar al socket nuevamente el usuario, por si refresca el navegador
+			this.loginWS(this.usuario.nombre);
+		}
+	}
+
 
 }

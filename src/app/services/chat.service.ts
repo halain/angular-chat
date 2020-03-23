@@ -14,7 +14,7 @@ export class ChatService {
   sendMessage(mensaje: string){
 
     const payload = {
-      de: 'Hector',
+      de: this.wsServices.getUsuario().nombre,
       cuerpo: mensaje
     }
 
@@ -29,6 +29,13 @@ export class ChatService {
 
   }
 
+
+  //Escuchar mensajes privados
+  getMessagePrivate(){
+
+    return this.wsServices.listen('mensaje-privado');
+
+  }
 
 
 
